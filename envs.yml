@@ -1,0 +1,9 @@
+name: "env"
+
+jobs:
+  os-info:
+    steps:
+      - name: printenv and args
+        run: |
+          printenv
+            

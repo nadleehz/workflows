@@ -12,7 +12,42 @@ jobs:
           fi
           if [[ $r != *bbr* ]]; then
             echo "bbr not enabled"
-            
+            if [[ $enable_bbr -ne 1 ]]; then
+              echo "bbr not enabled and enable_bbr is not set to 1"
+              exit 0
+            fi
+            echo "enable bbr"
+            sysctl_file="/etc/sysctl.conf"
+            args="-p"
+            if [[ "$PLATFORM" == "debian" ]]; then
+              if [[ $(echo "$PLATFORM_VERSION" | cut -d'.' -f1) -ge 13 ]]; then
+                echo "PLATFORM_VERSION is 13 or greater."
+                sysctl_file="/etc/sysctl.d/sysctl.conf"
+                args="--system"
+              else
+                echo "PLATFORM_VERSION is less than 13."
+              fi
+            fi
+            QDISC_LINE="net.core.default_qdisc=fq"
+            BBR_LINE="net.ipv4.tcp_congestion_control=bbr"
+            if [[ ! -f "$sysctl_file" ]]; then
+                touch "$sysctl_file"
+            fi
+
+            # Check for the QDISC line
+            if ! grep -qxF "$QDISC_LINE" "$sysctl_file"; then
+                echo "Adding QDISC line..."
+                echo "$QDISC_LINE" | tee -a "$sysctl_file" > /dev/null
+            fi
+
+            # Check for the BBR line
+            if ! grep -qxF "$BBR_LINE" "$sysctl_file"; then
+                echo "Adding BBR line..."
+                echo "$BBR_LINE" | tee -a "$sysctl_file" > /dev/null
+            fi
+
+            echo "Configuration check complete."
+            sysctl $args
           else
             echo "bbr enabled"
           fi
