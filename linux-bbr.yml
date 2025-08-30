@@ -1,0 +1,20 @@
+name: "linux-bbr"
+
+jobs:
+  os-info:
+    steps:
+      - name: check bbr
+        run: |
+          r=$(sysctl net.ipv4.tcp_congestion_control)
+          if [[ $? -ne 0 ]]; then
+            echo "failed to check bbr"
+            exit 1
+          fi
+          if [[ $r != *bbr* ]]; then
+            echo "bbr not enabled"
+            
+          else
+            echo "bbr enabled"
+          fi
+            
+          
