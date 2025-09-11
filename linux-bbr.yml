@@ -14,6 +14,7 @@ jobs:
             echo "bbr not enabled"
             if [[ $enable_bbr -ne 1 ]]; then
               echo "bbr not enabled and enable_bbr is not set to 1"
+              echo "return with args: -a enable_bbr=1 to enable bbr on the host"
               exit 0
             fi
             echo "enable bbr"
