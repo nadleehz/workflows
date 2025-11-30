@@ -8,7 +8,7 @@ checks:
   private-key: false
   args:
     - name: pub
-      pattern: "[\\S]+" # value match regex
+      pattern: ".+" # value match regex
 
 
 jobs:
