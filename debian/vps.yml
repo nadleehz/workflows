@@ -43,7 +43,8 @@ jobs:
 
       - name: add Users
         run: |
-          adduser veda
+          useradd -m veda
+          passwd -L veda
           usermod -aG sudo veda
           usermod -aG docker veda
 
