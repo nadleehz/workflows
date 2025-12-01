@@ -51,10 +51,10 @@ jobs:
           usermod -aG sudo veda
           usermod -aG docker veda
 
-          sudo -u veda mkdir -p ~/.ssh
-          sudo -u veda chmod 700 ~/.ssh
-          sudo -u veda echo "${pub}" > ~/.ssh/authorized_keys
-          sudo -u veda chmod 600 ~/.ssh/authorized_keys
+          sudo -u veda mkdir -p /home/veda/.ssh
+          sudo -u veda chmod 700 /home/veda/.ssh
+          echo "${pub}" | sudo -u veda tee /home/veda/.ssh/authorized_keys > /dev/null
+          sudo -u veda chmod 600 /home/veda/.ssh/authorized_keys
       - name: clean up
         run: |
           echo "clean up done"
