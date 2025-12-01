@@ -30,12 +30,16 @@ jobs:
           ufw allow 443/tcp
           ufw enable
 
-          echo "install docker"
-          apt remove -y $(dpkg --get-selections docker.io docker-compose docker-doc podman-docker containerd runc | cut -f1) || true
+          if which docker >/dev/null 2>&1; then
+            echo "Docker command exists."
+          else
+            echo "install docker"
+            apt remove -y $(dpkg --get-selections docker.io docker-compose docker-doc podman-docker containerd runc | cut -f1) || true
 
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          chmod +x get-docker.sh
-          ./get-docker.sh
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            chmod +x get-docker.sh
+            ./get-docker.sh
+          fi
 
       - name: add Users
         run: |
