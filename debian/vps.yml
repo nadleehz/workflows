@@ -34,7 +34,8 @@ jobs:
           apt remove -y $(dpkg --get-selections docker.io docker-compose docker-doc podman-docker containerd runc | cut -f1) || true
 
           curl -fsSL https://get.docker.com -o get-docker.sh
-          sh get-docker.sh
+          chmod +x get-docker.sh
+          ./get-docker.sh
 
       - name: add Users
         run: |
