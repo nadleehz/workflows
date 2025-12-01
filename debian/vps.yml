@@ -46,7 +46,8 @@ jobs:
           if id "veda" &>/dev/null; then
             echo "User veda already exists"
           else
-            adduser --disabled-password veda
+            echo "you need to create a simple password for new user veda"
+            adduser veda
           fi
           usermod -aG sudo veda
           usermod -aG docker veda
