@@ -43,16 +43,18 @@ jobs:
 
       - name: add Users
         run: |
-          adduser --disabled-password veda
+          if id "veda" &>/dev/null; then
+            echo "User veda already exists"
+          else
+            adduser --disabled-password veda
+          fi
           usermod -aG sudo veda
           usermod -aG docker veda
 
-          sudo su - veda
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo "${pub}" > ~/.ssh/authorized_keys
-          chmod 600 ~/.ssh/authorized_keys
-          exit
+          sudo -u veda mkdir -p ~/.ssh
+          sudo -u veda chmod 700 ~/.ssh
+          sudo -u veda echo "${pub}" > ~/.ssh/authorized_keys
+          sudo -u veda chmod 600 ~/.ssh/authorized_keys
       - name: clean up
         run: |
           echo "clean up done"
