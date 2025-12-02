@@ -25,7 +25,7 @@ jobs:
       - name: install software
         run: |
           apt update
-          apt -y install curl vim ufw nginx
+          apt -y install curl vim ufw nginx libnginx-mod-stream
           ufw allow ssh
           ufw allow 443/tcp
           ufw enable
