@@ -37,7 +37,7 @@ jobs:
 
           if [ ! -f "/usr/local/etc/realm/realm.toml" ]; then
             mkdir -p /usr/local/etc/realm/
-            cat <<EOF > /usr/local/etc/realm/realm.toml
+            cat <<-EOF > /usr/local/etc/realm/realm.toml
             [network]
             use_udp = false
             zero_copy = true
@@ -54,10 +54,11 @@ jobs:
             #listen = "[::]:10341"
             #remote = "ipv4:30005"
             EOF
+
           fi
 
           if [ ! -f "/etc/systemd/system/realm.service" ]; then
-            cat <<EOF > /etc/systemd/system/realm.service
+            cat <<-EOF > /etc/systemd/system/realm.service
             [Unit]
             Description=Realm Server
             After=network.target
