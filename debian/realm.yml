@@ -37,44 +37,44 @@ jobs:
 
           if [ ! -f "/usr/local/etc/realm/realm.toml" ]; then
             mkdir -p /usr/local/etc/realm/
-            cat <<-EOF > /usr/local/etc/realm/realm.toml
-            [network]
-            use_udp = false
-            zero_copy = true
-            fast_open = false
-            tcp_timeout = 300
-            udp_timeout = 30
-            send_proxy = false
-            send_proxy_version = 2
-            accept_proxy = false
-            accept_proxy_timeout = 5
-            ipv6_only = false
-
-            #[[endpoints]]
-            #listen = "[::]:10341"
-            #remote = "ipv4:30005"
-            EOF
+            cat <<'EOF' > /usr/local/etc/realm/realm.toml
+          [network]
+          use_udp = false
+          zero_copy = true
+          fast_open = false
+          tcp_timeout = 300
+          udp_timeout = 30
+          send_proxy = false
+          send_proxy_version = 2
+          accept_proxy = false
+          accept_proxy_timeout = 5
+          ipv6_only = false
+          
+          #[[endpoints]]
+          #listen = "[::]:10341"
+          #remote = "ipv4:30005"
+          EOF
 
           fi
 
           if [ ! -f "/etc/systemd/system/realm.service" ]; then
-            cat <<-EOF > /etc/systemd/system/realm.service
-            [Unit]
-            Description=Realm Server
-            After=network.target
-            Wants=network-online.target systemd-networkd-wait-online.service
-
-            [Service]
-            Type=simple
-            User=root
-            Restart=on-failure
-            RestartSec=5s
-            DynamicUser=true
-            ExecStart=/usr/local/bin/realm -c /usr/local/etc/realm/realm.toml
-
-            [Install]
-            WantedBy=multi-user.target
-            EOF
+            cat <<'EOF' > /etc/systemd/system/realm.service
+          [Unit]
+          Description=Realm Server
+          After=network.target
+          Wants=network-online.target systemd-networkd-wait-online.service
+          
+          [Service]
+          Type=simple
+          User=root
+          Restart=on-failure
+          RestartSec=5s
+          DynamicUser=true
+          ExecStart=/usr/local/bin/realm -c /usr/local/etc/realm/realm.toml
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOF
 
             systemctl daemon-reload
             systemctl enable realm
