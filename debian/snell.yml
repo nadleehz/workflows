@@ -1,0 +1,79 @@
+name: "Snell Setup"
+
+working-dir: /tmp/snell-setup
+env:
+  SNELL_VERSION: "5.0.1"
+
+checks:
+  private-key: false
+  requires-root: true
+
+
+jobs:
+  os-info:
+    steps:
+      - name: install or upgrade snell
+        run: |
+          set -e
+          snell_version=""
+          if [ -f "/usr/local/bin/snell-server" ]; then
+            snell_version=$(snell-server -v 2>&1 | grep -o "v[0-9]*\.[0-9]*\.[0-9]*" | cut -c2-)
+          fi
+
+          if [ "$snell_version" = "$SNELL_VERSION" ]; then
+            echo "Snell $SNELL_VERSION is already installed."
+            exit 0
+          fi
+
+          echo "Installing Snell $SNELL_VERSION..."
+          curl -fsSL https://dl.nssurge.com/snell/snell-server-v${SNELL_VERSION}-linux-amd64.zip -o snell.zip
+          unzip -q snell.zip
+          chmod +x snell-server
+          mv snell-server /usr/local/bin/
+          rm -f snell.zip
+
+          echo "Snell $SNELL_VERSION installed successfully."
+          snell-server -v
+
+          if [ ! -f "/usr/local/etc/snell-server/snell-server.conf" ]; then
+            mkdir -p /usr/local/etc/snell-server/
+            psk=$(openssl rand -base64 32)
+            cat <<EOF > /usr/local/etc/snell-server/snell-server.conf
+          [snell-server]
+          listen = ::0:30005
+          psk = $psk
+          ipv6 = true
+          EOF
+
+          fi
+
+          if [ ! -f "/etc/systemd/system/snell.service" ]; then
+            cat <<'EOF' > /etc/systemd/system/snell.service
+          [Unit]
+          Description=Snell Server
+          After=network.target
+          
+          [Service]
+          Type=simple
+          User=root
+          ExecStart=/usr/local/bin/snell-server -c /usr/local/etc/snell-server/snell-server.conf
+          Restart=on-failure
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+            systemctl daemon-reload
+            systemctl enable snell
+          fi
+
+          systemctl restart snell
+
+          echo "Snell server installed and started successfully."
+          sleep 2
+          systemctl status snell --no-pager
+     
+      - name: clean up
+        run: |
+          echo "clean up done"
+

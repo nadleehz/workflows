@@ -1,0 +1,95 @@
+name: "Shadow-tls Setup"
+
+working-dir: /tmp/shadow-tls-setup
+env:
+  SHADOWTLS_VERSION: "0.2.25"
+
+checks:
+  private-key: false
+  requires-root: true
+
+
+jobs:
+  os-info:
+    steps:
+      - name: install or upgrade shadow tls
+        run: |
+          set -e
+          shadowtls_version=""
+          if [ -f "/usr/local/bin/shadow-tls" ]; then
+            shadowtls_version=$(shadow-tls -V | cut -d ' ' -f 2)
+          fi
+
+          if [ "$shadowtls_version" = "$SHADOWTLS_VERSION" ]; then
+            echo "Shadow-tls $SHADOWTLS_VERSION is already installed."
+            exit 0
+          fi
+
+          echo "Installing Shadow-TLS $SHADOWTLS_VERSION..."
+          curl -fsSL https://github.com/ihciah/shadow-tls/releases/download/v${SHADOWTLS_VERSION}/shadow-tls-x86_64-unknown-linux-musl -o shadow-tls
+          chmod +x shadow-tls
+          mv shadow-tls /usr/local/bin/
+
+          if [ ! -f "/usr/local/etc/shadow-tls/shadow-tls.json" ]; then
+            mkdir -p /usr/local/etc/shadow-tls/
+            psk=$(openssl rand -base64 24 | tr -d '=+/' | cut -c1-32)
+            cat <<EOF > /usr/local/etc/shadow-tls/shadow-tls.json
+          {
+            "disable_nodelay": false,
+            "fastopen": true,
+            "v3": true,
+            "strict": true,
+            "server": {
+                    "listen": "::0:8443",
+                    "server_addr": "127.0.0.1:30005",
+                    "tls_addr": {
+                            "wildcard_sni": "off",
+                            "dispatch": {
+                                    "captive.apple.com": "captive.apple.com:443",
+                                    "gateway.icloud.com": "gateway.icloud.com:443",
+                                    "icloud.com": "icloud.com:443",
+                                    "cloud.tencent.com": "cloud.tencent.com:443"
+                            },
+                            "fallback": "cloud.tencent.com:443"
+                    },
+                    "password": "${psk}",
+                    "wildcard_sni": "authed"
+            }
+          }
+          EOF
+
+          fi
+
+          if [ ! -f "/etc/systemd/system/shadow-tls.service" ]; then
+            cat <<'EOF' > /etc/systemd/system/shadow-tls.service
+          [Unit]
+          Description=Shadow-TLS Server
+          After=network.target
+          
+          [Service]
+          Type=simple
+          User=root
+          ExecStart=/usr/local/bin/shadow-tls config --config /usr/local/etc/shadow-tls/shadow-tls.json
+          Restart=on-failure
+          StandardOutput=syslog
+          StandardError=syslog
+          SyslogIdentifier=shadow-tls
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+            systemctl daemon-reload
+            systemctl enable shadow-tls
+          fi
+
+          systemctl restart shadow-tls
+
+          echo "Shadow-tls installed and started successfully."
+          sleep 2
+          systemctl status shadow-tls --no-pager
+     
+      - name: clean up
+        run: |
+          echo "clean up done"
+
