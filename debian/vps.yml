@@ -53,6 +53,10 @@ jobs:
           usermod -aG docker veda
           usermod -aG systemd-journal veda
           usermod -aG adm veda
+          usermod -aG www-data veda
+          chown -R root:www-data /var/www
+          chmod -R 775 /var/www
+          find /var/www -type d -exec chmod g+s {} \;
 
           sudo -u veda mkdir -p /home/veda/.ssh
           sudo -u veda chmod 700 /home/veda/.ssh

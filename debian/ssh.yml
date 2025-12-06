@@ -1,0 +1,59 @@
+name: "ssh configuration"
+working-dir: /tmp/ssh
+checks:
+  requires-root: true
+jobs:
+  ssh-config:
+    steps:
+      - name: pre-check
+        script: |
+          const user = env.get("USER")
+          console.log(`current running user ${user}`)
+          if (user.toLowerCase() == "root") {
+            throw new Error("cannot use root user when applying ssh configuration")
+          }
+      - name: apply ssh configuration
+        script: |
+          console.log(args.get('sshd_config'))
+          let cfgFile = args.get('sshd_config')
+          if (!cfgFile) {
+            cfgFile = '/etc/ssh/sshd_config'
+          }
+          console.log('using config file: ' + cfgFile)
+          const lines = file.readFileAsLines(cfgFile)
+          let keys = {
+            'PermitRootLogin': 'no',
+            'PubkeyAuthentication': 'yes',
+            'PasswordAuthentication': 'no',
+            "PermitEmptyPasswords": 'no',
+          }
+          const newLines = lines.map(line => {
+            line = line.trim()
+            if (line.startsWith('#')) {
+              return line
+            }
+
+            if (line.startsWith('PermitRootLogin')) {
+              delete keys['PermitRootLogin']
+              return 'PermitRootLogin no'
+            } else if (line.startsWith('PubkeyAuthentication')) {
+              delete keys['PubkeyAuthentication']
+              return 'PubkeyAuthentication yes'
+            } else if (line.startsWith('PasswordAuthentication')) {
+              delete keys['PasswordAuthentication']
+              return 'PasswordAuthentication no'
+            } else if (line.startsWith('PermitEmptyPasswords')) {
+              delete keys['PermitEmptyPasswords']
+              return 'PermitEmptyPasswords no'
+            }
+
+            return line
+          })
+
+          Object.keys(keys).forEach(key => {
+            newLines.push(`${key} ${keys[key]}`)
+          })
+          if (newLines.at(-1).trim() != '') {
+            newLines.push('')
+          }
+          file.writeFile(cfgFile, newLines.join("\n"))
