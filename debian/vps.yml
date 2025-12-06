@@ -51,6 +51,8 @@ jobs:
           fi
           usermod -aG sudo veda
           usermod -aG docker veda
+          usermod -aG systemd-journal veda
+          usermod -aG adm veda
 
           sudo -u veda mkdir -p /home/veda/.ssh
           sudo -u veda chmod 700 /home/veda/.ssh
