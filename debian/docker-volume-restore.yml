@@ -1,0 +1,37 @@
+name: "docker volume restore"
+working-dir: /tmp/docker-volume-restore
+checks:
+  requires-root: false
+  args:
+    - name: volume_file
+      pattern: "^\\S+\\.tar\\.gz$"
+
+jobs:
+  docker-volume-restore:
+    steps:
+      - name: pre-check
+        run: |
+          if [[ ! -f "${volume_file}" ]]; then
+            echo "the volume backup tar file ${volume_file} doesn't exist"
+            exit 1
+          fi
+          name=$(basename "${volume_file}")
+          volume="${name%.tar.gz}"
+          echo "volume name ${volume}"
+          set +e
+          docker volume inspect "${volume}"
+          if [[ $? == 0 ]]; then
+            echo "the volume ${volume} already exist, please backup and remove it first"
+            exit 1
+          fi
+
+          set -e
+
+          echo "create volume ${volume}"
+          docker volume create "${volume}"
+
+          echo "restore volume ${volume} from ${volume_file}"
+          docker run --rm --user root -v "${volume_file}:/backup/${name}" -v "${volume}:/data" busybox tar -xzf "/backup/${name}" -C /data
+          echo "done"
+          
+
