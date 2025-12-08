@@ -1,0 +1,53 @@
+name: "docker volume backup"
+working-dir: /opt/docker/backup
+checks:
+  requires-root: false
+  args:
+    - name: container
+      pattern: "\\S+"
+
+jobs:
+  docker-volume-backup:
+    steps:
+      - name: pre-check
+        run: |
+          status=$(docker ps --filter "name=^${container}\$" --filter "status=running" --format '{{json .}}')
+          if [[ -n "$status" ]]; then
+            echo "docker container $container is running, please stop it first, but don't remove it"
+            exit 1
+          fi
+
+          status=$(docker ps --filter "name=^${container}\$" --filter "status=exited" --format '{{json .}}')
+          if [[ -z "$status" ]]; then
+            echo "docker container $container is not exist"
+            exit 1
+          fi
+          mkdir -p "${container}"
+
+      - name: backup volume
+        script: |
+          let cmd = core.runCmd("docker", ["inspect", args.get('container'), "--format", "{{json .Mounts}}"])
+          if (cmd.status != 0) {
+            throw new Error("inspect container failed: " + cmd.stderr)
+          }
+          console.log(`container: ${args.get('container')}: ${cmd.stdout}`)
+          const mounts = JSON.parse(cmd.stdout)
+
+          for (let i = 0; i < mounts.length; i++) {
+            const mount = mounts[i]
+            if (mount.Type != "volume") {
+              console.log("skip non-volume mount: " + JSON.stringify(mount))
+              continue
+            }
+            const name = mount.Name
+            console.log ("backup volume: " + name)
+
+            let cmd = core.runCmd("docker", ["run", "--rm", "-v", `${env.get('PWD')}/${args.get('container')}:/backup`, "-v", `${name}:/data`, "busybox", "tar", "-czf", `/backup/${name}.tar.gz`, "-C", "/data", "."])
+            if (cmd.status != 0) {
+              throw new Error("backup volume failed: " + cmt.stderr)
+            }
+            console.log("backup volume done: " + name)
+
+          }
+
+
