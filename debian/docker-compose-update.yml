@@ -1,0 +1,83 @@
+name: "docker compose update"
+working-dir: /tmp/docker-compose-update
+checks:
+  requires-root: false
+jobs:
+  update-compose:
+    steps:
+      - name: update docker compose
+        script: |
+          let cmd = core.runCmd("ls", ["/opt/docker/*/docker-compose.yml"]);
+          if (cmd.status != 0) {
+            throw new Error("list docker compose files failed: " + cmd.stderr)
+          }
+          console.log("found docker compose files:");
+          console.log(cmd.stdout);
+          
+          // Parse the output to get container names
+          const lines = cmd.stdout.trim().split('\n');
+          for (let line of lines) {
+            line = line.trim();
+            if (!line) {
+              continue;
+            }
+            const dockerCompose = core.parseYAMLFile(line)
+            const services = dockerCompose.services || {}
+            const keys = Object.keys(services);
+            let recreate = false
+            for(let serviceName of keys) {
+              const image = services[serviceName]?.image;
+              if (!image) {
+                console.log("service " + serviceName + " has no image defined");
+                continue;
+              }
+              
+              console.log("handle image " + image + " for service " + serviceName + " in file " + line);
+              let ret = core.runCmd("docker", ["inspect", "--format", "{{index .RepoDigests 0}}", image]);
+              if (ret.status !== 0) {
+                console.log("failed to get digest for " + image + ": " + ret.stderr);
+                continue;
+              }
+
+              const curDigest = ret.stdout.trim();
+              console.log("digest for " + image + ": " + curDigest);
+  
+              ret = core.runCmd("docker", ["pull", image]);
+              if (ret.status !== 0) {
+                console.log("failed to pull image " + image + ": " + ret.stderr);
+                continue;
+              }
+
+              console.log("successfully pulled image " + image);
+              ret = core.runCmd("docker", ["inspect", "--format", "{{index .RepoDigests 0}}", image]);
+              if (ret.status !== 0) {
+                console.log("failed to get new digest for " + image + ": " + ret.stderr);
+                continue;
+              }
+              const newDigest = ret.stdout.trim();
+
+              console.log("new digest for " + image + ": " + newDigest);
+              
+              console.log("comparing digests for " + image + ": old=" + curDigest + ", new=" + newDigest);
+              if (curDigest === newDigest) {
+                console.log("image " + image + " is already up to date");
+                continue;
+              }
+
+              console.log("need to recreate container for " + serviceName + " using image " + image);
+              recreate = true;
+
+            }
+            
+            if (recreate) {
+              console.log("recreating containers for file: " + line);
+              let ret = core.runCmd("docker-compose", ["up", "-d"], {
+                'workingDir': file.dir(line)
+              });
+              if (ret.status !== 0) {
+                console.log("failed to recreate containers for " + line + ": " + ret.stderr);
+              } else {
+                console.log("successfully recreated containers for " + line);
+              }
+            }
+          }
