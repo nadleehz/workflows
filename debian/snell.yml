@@ -55,7 +55,7 @@ jobs:
           
           [Service]
           Type=simple
-          User=root
+          User=veda
           ExecStart=/usr/local/bin/snell-server -c /usr/local/etc/snell-server/snell-server.conf
           Restart=on-failure
           

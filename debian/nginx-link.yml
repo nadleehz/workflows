@@ -1,0 +1,19 @@
+name: "nginx-link"
+working-dir: /tmp/nginx
+checks:
+  requires-root: true
+args:
+  - name: "nginx_config"
+    type: string
+    pattern: ".+"
+jobs:
+  nginx-link:
+    steps:
+      - name: create nginx link
+        run: |
+          echo "create nginx link for $nginx_config"
+          if [ ! -f "/etc/nginx/sites-available/${nginx_config}" ]; then
+            echo "nginx config file ${nginx_config} not found"
+            exit 1
+          fi
+          ln -s /etc/nginx/sites-available/${nginx_config} /etc/nginx/sites-enabled/${nginx_config}

@@ -57,7 +57,7 @@ jobs:
           
           [Service]
           Type=simple
-          User=root
+          User=veda
           ExecStart=/usr/local/bin/ssserver -c /usr/local/etc/ss-rust/server.json
           Restart=on-failure
           

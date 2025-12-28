@@ -30,6 +30,11 @@ jobs:
           ufw allow 443/tcp
           ufw enable
 
+          if [[ -n "${no_docker}" ]]; then
+            echo "skip docker installation"
+            exit 0
+          fi
+
           if which docker >/dev/null 2>&1; then
             echo "Docker command exists."
           else
@@ -50,7 +55,12 @@ jobs:
             adduser veda
           fi
           usermod -aG sudo veda
-          usermod -aG docker veda
+          
+          if [[ -n "${no_docker}" ]]; then
+            echo "skip docker group"
+          else
+            usermod -aG docker veda
+          fi
           usermod -aG systemd-journal veda
           usermod -aG adm veda
           usermod -aG www-data veda
