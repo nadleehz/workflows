@@ -44,7 +44,7 @@ jobs:
 
             let cmd = core.runCmd("docker", ["run", "--rm", "-v", `${env.get('PWD')}/${args.get('container')}:/backup`, "-v", `${name}:/data`, "busybox", "tar", "-czf", `/backup/${name}.tar.gz`, "-C", "/data", "."])
             if (cmd.status != 0) {
-              throw new Error("backup volume failed: " + cmt.stderr)
+              throw new Error("backup volume failed: " + cmd.stderr)
             }
             console.log("backup volume done: " + name)
 
