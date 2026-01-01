@@ -9,6 +9,7 @@ checks:
   args:
     - name: pub
       pattern: ".+" # value match regex
+    - name: no_docker
 
 
 jobs:
