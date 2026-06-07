@@ -2,7 +2,7 @@ name: "SS-Rust Setup"
 
 working-dir: /tmp/ss-rust-setup
 env:
-  SS_VERSION: "1.23.5"
+  SS_VERSION: "1.24.0"
 
 checks:
   private-key: false
