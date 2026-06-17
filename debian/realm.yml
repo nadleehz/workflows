@@ -2,7 +2,7 @@ name: "Realm Setup"
 
 working-dir: /tmp/realm-setup
 env:
-  REALM_VERSION: "2.9.3"
+  REALM_VERSION: "2.9.4"
 
 checks:
   private-key: false
@@ -26,7 +26,7 @@ jobs:
           fi
 
           echo "Installing Realm $REALM_VERSION..."
-          curl -fsSL https://github.com/zhboner/realm/releases/download/v2.9.2-2/realm-x86_64-unknown-linux-gnu.tar.gz -o realm.tar.gz
+          curl -fsSL https://github.com/zhboner/realm/releases/download/${REALM_VERSION}/realm-x86_64-unknown-linux-gnu.tar.gz -o realm.tar.gz
           tar -xvf realm.tar.gz
           chmod +x realm
           mv realm /usr/local/bin/
