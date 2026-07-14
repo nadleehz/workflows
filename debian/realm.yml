@@ -57,8 +57,9 @@ jobs:
 
           fi
 
-          if [ ! -f "/etc/systemd/system/realm.service" ]; then
-            cat <<'EOF' > /etc/systemd/system/realm.service
+          service_user="${SUDO_USER:-${USER:-root}}"
+          if [ ! -f "/etc/systemd/system/realm.service" ] || grep -q 'User=${USER}' /etc/systemd/system/realm.service || grep -q '^DynamicUser=true$' /etc/systemd/system/realm.service; then
+            cat <<EOF > /etc/systemd/system/realm.service
           [Unit]
           Description=Realm Server
           After=network.target
@@ -66,10 +67,9 @@ jobs:
           
           [Service]
           Type=simple
-          User=${USER}
+          User=${service_user}
           Restart=on-failure
           RestartSec=5s
-          DynamicUser=true
           ExecStart=/usr/local/bin/realm -c /usr/local/etc/realm/realm.toml
           
           [Install]
@@ -89,4 +89,3 @@ jobs:
       - name: clean up
         run: |
           echo "clean up done"
-

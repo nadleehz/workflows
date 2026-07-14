@@ -49,15 +49,16 @@ jobs:
 
           fi
 
+          service_user="${SUDO_USER:-${USER:-root}}"
           if [ ! -f "/etc/systemd/system/ss-rust.service" ]; then
-            cat <<'EOF' > /etc/systemd/system/ss-rust.service
+            cat <<EOF > /etc/systemd/system/ss-rust.service
           [Unit]
           Description=SS-Rust Server
           After=network.target
           
           [Service]
           Type=simple
-          User=veda
+          User=${service_user}
           ExecStart=/usr/local/bin/ssserver -c /usr/local/etc/ss-rust/server.json
           Restart=on-failure
           
@@ -78,4 +79,3 @@ jobs:
       - name: clean up
         run: |
           echo "clean up done"
-

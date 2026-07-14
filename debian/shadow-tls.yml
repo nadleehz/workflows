@@ -60,15 +60,16 @@ jobs:
 
           fi
 
+          service_user="${SUDO_USER:-${USER:-root}}"
           if [ ! -f "/etc/systemd/system/shadow-tls.service" ]; then
-            cat <<'EOF' > /etc/systemd/system/shadow-tls.service
+            cat <<EOF > /etc/systemd/system/shadow-tls.service
           [Unit]
           Description=Shadow-TLS Server
           After=network.target
           
           [Service]
           Type=simple
-          User=root
+          User=${service_user}
           ExecStart=/usr/local/bin/shadow-tls config --config /usr/local/etc/shadow-tls/shadow-tls.json
           Restart=on-failure
           StandardOutput=syslog
@@ -92,4 +93,3 @@ jobs:
       - name: clean up
         run: |
           echo "clean up done"
-

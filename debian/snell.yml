@@ -47,15 +47,16 @@ jobs:
 
           fi
 
-          if [ ! -f "/etc/systemd/system/snell.service" ]; then
-            cat <<'EOF' > /etc/systemd/system/snell.service
+          service_user="${SUDO_USER:-${USER:-root}}"
+          if [ ! -f "/etc/systemd/system/snell.service" ] || grep -q 'User=${USER}' /etc/systemd/system/snell.service; then
+            cat <<EOF > /etc/systemd/system/snell.service
           [Unit]
           Description=Snell Server
           After=network.target
           
           [Service]
           Type=simple
-          User=${USER}
+          User=${service_user}
           ExecStart=/usr/local/bin/snell-server -c /usr/local/etc/snell-server/snell-server.conf
           Restart=on-failure
           
@@ -76,4 +77,3 @@ jobs:
       - name: clean up
         run: |
           echo "clean up done"
-
