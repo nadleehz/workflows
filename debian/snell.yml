@@ -2,7 +2,7 @@ name: "Snell Setup"
 
 working-dir: /tmp/snell-setup
 env:
-  SNELL_VERSION: "5.0.1"
+  SNELL_VERSION: "6.0.0rc2"
 
 checks:
   private-key: false
@@ -53,13 +53,13 @@ jobs:
           [Unit]
           Description=Snell Server
           After=network.target
-          
+
           [Service]
           Type=simple
           User=${service_user}
           ExecStart=/usr/local/bin/snell-server -c /usr/local/etc/snell-server/snell-server.conf
           Restart=on-failure
-          
+
           [Install]
           WantedBy=multi-user.target
           EOF
@@ -73,7 +73,7 @@ jobs:
           echo "Snell server installed and started successfully."
           sleep 2
           systemctl status snell --no-pager
-     
+
       - name: clean up
         run: |
           echo "clean up done"
