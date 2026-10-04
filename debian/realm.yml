@@ -2,7 +2,7 @@ name: "Realm Setup"
 
 working-dir: /tmp/realm-setup
 env:
-  REALM_VERSION: "2.9.4"
+  REALM_VERSION: "2.9.6"
 
 checks:
   private-key: false
