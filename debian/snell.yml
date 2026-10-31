@@ -2,7 +2,7 @@ name: "Snell Setup"
 
 working-dir: /tmp/snell-setup
 env:
-  SNELL_VERSION: "6.0.0rc2"
+  SNELL_VERSION: "6.0.0"
 
 checks:
   private-key: false
