@@ -1,0 +1,74 @@
+name: "Fail2ban Setup"
+
+working-dir: /tmp/fail2ban-setup
+env:
+  BANTIME: "3600"
+  FINDTIME: "600"
+  MAXRETRY: "5"
+
+checks:
+  private-key: false
+  requires-root: true
+
+
+jobs:
+  os-info:
+    steps:
+      - name: install and configure fail2ban
+        run: |
+          set -e
+          jail_file="/etc/fail2ban/jail.d/sshd.local"
+
+          ssh_port=$(sshd -T 2>/dev/null | awk '$1 == "port" {print $2}' | sort -un | paste -sd, -)
+          ssh_port="${ssh_port:-ssh}"
+
+          cat <<EOF > sshd.local.new
+          [sshd]
+          enabled = true
+          backend = systemd
+          port = ${ssh_port}
+          banaction = nftables
+          maxretry = ${MAXRETRY}
+          findtime = ${FINDTIME}
+          bantime = ${BANTIME}
+          EOF
+
+          is_configured() {
+            systemctl is-active --quiet fail2ban || return 1
+            systemctl is-enabled --quiet fail2ban || return 1
+            cmp -s sshd.local.new "$jail_file" || return 1
+            [ "$(fail2ban-client get sshd maxretry 2>/dev/null)" = "$MAXRETRY" ] || return 1
+            [ "$(fail2ban-client get sshd findtime 2>/dev/null)" = "$FINDTIME" ] || return 1
+            [ "$(fail2ban-client get sshd bantime 2>/dev/null)" = "$BANTIME" ] || return 1
+          }
+
+          if is_configured; then
+            echo "Fail2ban is already running with the correct configuration."
+            rm -f sshd.local.new
+            exit 0
+          fi
+
+          echo "Installing and configuring fail2ban..."
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y fail2ban python3-systemd nftables
+
+          mv sshd.local.new "$jail_file"
+          chown root:root "$jail_file"
+          chmod 644 "$jail_file"
+
+          fail2ban-client -t
+          systemctl enable fail2ban
+          systemctl restart fail2ban
+
+          for _ in $(seq 1 10); do
+            fail2ban-client status sshd >/dev/null 2>&1 && break
+            sleep 1
+          done
+
+          fail2ban-client status sshd
+          systemctl status fail2ban --no-pager
+          echo "Fail2ban installed and started successfully."
+
+      - name: clean up
+        run: |
+          echo "clean up done"
